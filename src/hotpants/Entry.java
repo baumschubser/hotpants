@@ -1,0 +1,127 @@
+/*
+* Author: Matthias Clausen <matthiasclausen@posteo.de>
+* License: GPL 2
+*/
+
+package hotpants;
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
+public class Entry {
+    private byte refreshSeconds, digitCount, recordStoreId;
+    private String secret;
+    private String id;
+    final static byte DELIM = 127;
+    
+    public Entry(byte[] id, byte[] secret, byte refreshSeconds, byte digitCount, byte recordStoreId) {
+        this.id = new String(id);
+        this.secret = new String(secret);
+        this.refreshSeconds = refreshSeconds;
+        this.digitCount = digitCount;
+        this.recordStoreId = recordStoreId;
+    }
+    
+    public Entry(String id) {
+        refreshSeconds = 30;
+        digitCount = 6;
+        secret = "";
+        this.id = id;
+        recordStoreId = -1;
+    }
+    
+    public int getRefreshSeconds() {
+        return refreshSeconds;
+    }   
+    
+    public void setRefreshSeconds(byte s) {
+        refreshSeconds = s;
+    }
+    
+    public int getDigitCount() {
+        return digitCount;
+    }
+    
+    public void setDigitCount(byte d) {
+        digitCount = d;
+    }
+    
+    public String getSecret() {
+        return secret;
+    }
+    
+    public void setSecret(String s) {
+        secret = s;
+    }
+    
+    public String getId() {
+        return id;
+    }
+    
+    public void setId(String i) {
+        id = i;
+    }
+    
+    public int getRecordStoreId() {
+        return recordStoreId;
+    }
+    
+    public void setRecordStoreId(byte n) {
+        recordStoreId = n;
+    }
+    
+    public byte[] toBytes() {
+        byte[] b_id = id.getBytes();
+        byte[] b_secret = secret.getBytes();
+        byte[] ret = new byte[b_id.length + b_secret.length + 7];
+        
+        // Store id
+        System.arraycopy(b_id, 0, ret, 0, b_id.length);
+        ret[b_id.length] = DELIM;
+        
+        //Store secret
+        System.arraycopy(b_secret, 0, ret, b_id.length+1, b_secret.length);
+        ret[b_id.length+b_secret.length + 1] = DELIM;
+        
+        //Store refreshSeconds
+        ret[b_id.length+b_secret.length + 2] = refreshSeconds;
+        ret[b_id.length+b_secret.length + 3] = DELIM;
+        
+        //Store digitCount
+        ret[b_id.length+b_secret.length + 4] = digitCount;
+        ret[b_id.length+b_secret.length + 5] = DELIM;
+        
+        //Store recordStoreId
+        ret[b_id.length+b_secret.length + 6] = recordStoreId;
+        
+        System.out.println("Converting the entry " + id + " to this byte array: " + ret);
+        return ret;
+    }
+    
+    public static Entry fromBytes(byte[] bytes) {
+        ByteArrayOutputStream b_id_baos = new ByteArrayOutputStream();
+        DataOutputStream b_id = new DataOutputStream(b_id_baos);
+        ByteArrayOutputStream b_secret_baos = new ByteArrayOutputStream();
+        DataOutputStream b_secret = new DataOutputStream(b_secret_baos);
+
+        byte b_refreshSeconds = 30, b_digitCount = 6, b_recordStoreId = -1;
+        byte count = 0;
+        
+        try {
+            for (int i = 0; i < bytes.length; i++) {
+                if (bytes[i] != DELIM) {
+                    if (count == 0) b_id.write(bytes[i]);
+                    if (count == 1) b_secret.write(bytes[i]);
+                    if (count == 2) b_refreshSeconds = bytes[i];
+                    if (count == 3) b_digitCount = bytes[i];
+                    if (count == 4) b_recordStoreId = bytes[i];
+                }
+                else count++;
+            }
+        } catch (IOException e) {
+            System.out.println("Could not read Configuration from record store. Out of memory?");
+        }
+        return new Entry(b_id_baos.toByteArray(), b_secret_baos.toByteArray(), b_refreshSeconds, b_digitCount, b_recordStoreId);
+    }
+}
