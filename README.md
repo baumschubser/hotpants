@@ -3,7 +3,7 @@
 # Hotpants
 ## A HOTP one time password generator for feature phones
 
-A J2ME Java application to manage your two-factor authentication with your dumphone on the go.
+A J2ME Java application to manage your two-factor authentication with your dumbphone on the go.
 
 ## Screenshots
 ![Screenshot 1](screenshots/screenshot1.jpg)
