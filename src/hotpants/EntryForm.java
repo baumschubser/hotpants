@@ -11,19 +11,16 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 public class EntryForm extends Form implements CommandListener {
-    private TextField idItem, secretItem, refreshSecondsItem, digitCountItem;
+    private TextField idItem, secretItem, refreshSecondsItem, digitCountItem, counterItem;
     private Command cancel, save;
     private Midlet midlet;
-    private Entry entry;
-    private Alert alert;
+    private TotpEntry totpEntry;
+    private HotpEntry hotpEntry;
+    private int entryType;
     
     public EntryForm(String title, Midlet m){
         super(title);
-        
         midlet = m;
-        
-        alert = new Alert("Error");
-        alert.setTimeout(2000);
         
         cancel = new Command("Cancel", Command.CANCEL, 1);
         addCommand(cancel);
@@ -31,106 +28,167 @@ public class EntryForm extends Form implements CommandListener {
         save = new Command("Save", Command.ITEM, 2);
         addCommand(save);
         
-        idItem = new TextField("Name", "", 80, TextField.ANY);
-        append(idItem);
-        
-        secretItem = new TextField("Secret", "", 126, TextField.ANY);
-        append(secretItem);
-        
-        refreshSecondsItem = new TextField("Token period in seconds", "30", 3, TextField.NUMERIC);
-        append(refreshSecondsItem);
-        
-        digitCountItem = new TextField("Number of digits", "6", 2, TextField.NUMERIC);
-        append(digitCountItem);        
-
         this.setCommandListener(this);
     }
     
-    public void setEntry(Entry e) {
-        entry = e;
-        idItem.setString(e.getId());
-        secretItem.setString(e.getSecret());
-        refreshSecondsItem.setString(Integer.toString(e.getRefreshSeconds()));
-        digitCountItem.setString(Integer.toString(e.getDigitCount()));
-    }
-        
-    public Form getForm() {
-        defaultValues();
-        return (Form)this;
-    }
-    
-    private void defaultValues() {
-        idItem.setString("");
-        secretItem.setString("");
-        digitCountItem.setString("6");
-        refreshSecondsItem.setString("30");
-        entry = null;
+    public void newTotpEntry() {
+        entryType = Configuration.TOTP;
+        TotpEntry t = new TotpEntry("");
+        setCommonItems(t.getId(), t.getSecret());
+        this.setTotpItems(t);
     }
 
+    public void newHotpEntry() {
+        entryType = Configuration.HOTP;
+        HotpEntry e = new HotpEntry("");
+        setCommonItems(e.getId(), e.getSecret());
+        setHotpItems(e);
+    }
+    
+    private void setCommonItems(String id, String secret) {
+        deleteAll();
+        idItem = new TextField("Name", id, 80, TextField.ANY);
+        append(idItem);
+        
+        secretItem = new TextField("Secret", secret, 126, TextField.ANY);
+        append(secretItem);
+    }
+
+    private void setHotpItems(HotpEntry e) {
+        counterItem = new TextField("Counter", Integer.toString(e.getCounter()), 6, TextField.NUMERIC);
+        append(counterItem);
+    }
+    
+    private void setTotpItems(TotpEntry e) {
+        refreshSecondsItem = new TextField("Token period in seconds", Integer.toString(e.getRefreshSeconds()), 3, TextField.NUMERIC);
+        append(refreshSecondsItem);
+        
+        digitCountItem = new TextField("Number of digits", Integer.toString(e.getDigitCount()), 2, TextField.NUMERIC);
+        append(digitCountItem);             
+    }
+    
+    public void setEntry(Otp e) {
+        if (e == null) return;
+
+        entryType = e.getOtpType();
+
+        deleteAll();
+        setCommonItems(e.getId(), e.getSecret());
+        if (Configuration.TOTP == e.getOtpType()) {
+            hotpEntry = null;
+            totpEntry = (TotpEntry)e;
+            setTotpItems((TotpEntry)e);
+        } else if (Configuration.HOTP == e.getOtpType()) {
+            totpEntry = null;
+            hotpEntry = (HotpEntry)e;
+            setHotpItems((HotpEntry)e);
+        }
+    }
+        
+    public void reset() {
+        deleteAll();
+        idItem = null;
+        secretItem = null;
+        refreshSecondsItem = null;
+        digitCountItem = null;
+        counterItem = null;
+        totpEntry = null;
+        hotpEntry = null;
+        entryType = -1;
+    }
+        
     public void commandAction(Command c, Displayable d){
-        if(c.getCommandType() == Command.CANCEL){
-            defaultValues();
+        if(c == cancel) {
+            reset();
             midlet.showMainForm();
         } else if (c.getCommandType() == Command.ITEM) {
-            if (alertSanitation()) {
-                if (entry == null) { // new entry
-                    midlet.getMainForm().addEntry(midlet.getConfiguration().addEntry(entryFromInputs()));
+            if (sanitation()) {
+                if (totpEntry == null && hotpEntry == null) { // new entry
+                    midlet.getMainForm().addEntry(midlet.getConfiguration().addEntry(newOtpFromInputs()));
                 } else { // update
-                    midlet.getMainForm().updateEntry(midlet.getConfiguration().updateEntry(entryFromInputs()));
+                    midlet.getMainForm().updateEntry(midlet.getConfiguration().updateEntry(updateOtpFromInputs()));
                 }
-                defaultValues();
-                midlet.showMainForm();
             }
+            reset();
+            midlet.showMainForm();
         }
     }
     
-    private boolean alertSanitation() {
-        boolean ok = true;
+    private boolean sanitation() {
         if (idItem.getString().length() == 0) {
-            alert.setString("Name must not be empty");
-            ok = false;
-        } else if (secretItem.getString().length() < 5) {
-            alert.setString("Secret must be 5 characters or more");
-            ok = false;
+            midlet.alertError("Name must not be empty", this);
+            return false;
+        }
+        if (secretItem.getString().length() < 5) {
+            midlet.alertError("Secret must be 5 characters or more", this);
+            return false;
         } 
-        if (ok) {
+        if (entryType == Configuration.TOTP) {
             try {
                 int refrSec = Integer.parseInt(refreshSecondsItem.getString());
                 if (refrSec < 1) {
-                    alert.setString("Interval must be at least 1 second");
-                    ok = false;
+                    midlet.alertError("Interval must be at least 1 second", this);
+                    return false;
                 }
             } catch (NumberFormatException e) {
-                alert.setString("Interval must be an integer");
-                ok = false;
+                midlet.alertError("Interval must be an integer", this);
+                return false;
             }
-        }
-        if (ok) {
+            
             try {
                 int digCount = Integer.parseInt(digitCountItem.getString());
                 if (digCount < 1) {
-                    alert.setString("Number of digits must be at least 6");
-                    ok = false;
+                    midlet.alertError("Number of digits must be at least 6", this);
+                    return false;
                 }
             } catch (NumberFormatException e) {
-                alert.setString("Number of digits must be an integer");
-                ok = false;
+                midlet.alertError("Number of digits must be an integer", this);
+                return false;
+            }
+        } else if (entryType == Configuration.HOTP) {
+            try {
+                int counter = Integer.parseInt(counterItem.getString());
+                if (counter < 0) {
+                    midlet.alertError("Counter must be positive", this);
+                    return false;
+                }
+            } catch (NumberFormatException e) {
+                midlet.alertError("Counter must be an integer", this);
+                return false;
             }
         }
-        if (!ok) {
-            Display.getDisplay(midlet).setCurrent(alert, this);
-        }
-        return ok;
+        return true;
     }
 
+    private Otp newOtpFromInputs() {
+        // It is assumed there was already sanitation
+        if (Configuration.TOTP == entryType) {
+            totpEntry = new TotpEntry("");
+            return updateOtpFromInputs();
+        } else if (Configuration.HOTP == entryType) {
+            hotpEntry = new HotpEntry("");
+            return updateOtpFromInputs();
+        }
+        return null;
+    }
     
-    private Entry entryFromInputs() {
-        Entry e = new Entry(idItem.getString());
-        e.setId(idItem.getString());
-        e.setDigitCount((byte)Integer.parseInt(digitCountItem.getString()));
-        e.setRefreshSeconds((byte)Integer.parseInt(refreshSecondsItem.getString()));
-        e.setSecret(secretItem.getString());
-        if (entry != null) e.setRecordStoreId((byte)entry.getRecordStoreId());
-        return e;
+    private Otp updateOtpFromInputs() {
+        // It is assumed there was already sanitation
+        String id = idItem.getString();
+        String secret = secretItem.getString();
+        
+        if (Configuration.TOTP == entryType && totpEntry != null) {
+            totpEntry.setDigitCount((byte)Integer.parseInt(digitCountItem.getString()));
+            totpEntry.setRefreshSeconds((byte)Integer.parseInt(refreshSecondsItem.getString()));
+            totpEntry.setId(id);
+            totpEntry.setSecret(secret);
+            return totpEntry;
+        } else if (Configuration.HOTP == entryType && hotpEntry != null) {
+            hotpEntry.setCounter(Integer.parseInt(counterItem.getString()));
+            hotpEntry.setId(id);
+            hotpEntry.setSecret(secret);
+            return hotpEntry;
+        }
+        return null;
     }
 }

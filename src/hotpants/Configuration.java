@@ -11,16 +11,29 @@ import java.util.Hashtable;
 public class Configuration {
     private RecordStore recordStore;
     private Hashtable entries;
+    public static final byte DELIM = 127;
+    public static final byte TOTP = 1;
+    public static final byte HOTP = 2;
     
     public Configuration() {
         entries = new Hashtable();
         try {
             recordStore = RecordStore.openRecordStore("Hotpants",true);
+            recordStore.setMode(RecordStore.AUTHMODE_PRIVATE, false);
             RecordEnumeration re = recordStore.enumerateRecords(null, null, false);
             while (re.hasNextElement()) {
-                Entry e = Entry.fromBytes(recordStore.getRecord(re.nextRecordId()));
+                int recId = re.nextRecordId();
+                byte[] record = recordStore.getRecord(recId);
+                record[record.length-1] = (byte)recId;
+                int type = getEntryTypeFromRecordBytes(record);
+                if (Configuration.TOTP == type) {
+                    TotpEntry e = TotpEntry.fromBytes(record);
+                    entries.put(e.getId(), e);
+                } else if (Configuration.HOTP == type) {
+                    HotpEntry e = HotpEntry.fromBytes(record);
                     entries.put(e.getId(), e);
                     System.out.println("Read entry " + e.getId());
+                }
             }
             recordStore.closeRecordStore();
         } catch (RecordStoreException e) {
@@ -28,45 +41,65 @@ public class Configuration {
         }
     }
     
-    public Entry addEntry(Entry entry) {
-        entries.put(entry.getId(), entry);
-        try {
-            recordStore = RecordStore.openRecordStore("Hotpants",true);
-            entry.setRecordStoreId((byte)recordStore.getNextRecordID());
-            byte[] entryBytes = entry.toBytes();
-            recordStore.addRecord(entryBytes, 0, entryBytes.length);
-            recordStore.closeRecordStore();
-            System.out.println("Entry "+ entry.getId() + " saved to record store.");
-        } catch (RecordStoreException e) {
-            System.out.println("Could not save entry " + entry.getId() + ": " + e.getMessage());
+    private int getEntryTypeFromRecordBytes(byte[] record) {
+        int count = 0;
+        for (int i = 0; i < record.length; i++) {
+                if (count == 2) {
+                    if (Configuration.HOTP == record[i]) return Configuration.HOTP;
+                    if (Configuration.TOTP == record[i]) return Configuration.TOTP;
+                    System.err.println("Could not determine entry type");
+                    return -1;
+                }
+                if (Configuration.DELIM == record[i]) {
+                    count++;
+                }
         }
+        System.err.println("Record corrupt");
+        return -1;
+    }
+    
+    public Otp addEntry(Otp entry) {
+        byte recId = addEntryToRecordStore(entry.toBytes());
+        entry.setRecordStoreId(recId);
+        entries.put(entry.getId(), entry);
         return entry;
     }
-    
-    public Entry addEntry(String id) {
-        Entry entry = new Entry(id);
-        entry.setSecret("secret");
-        return addEntry(entry);
-    }
-    
-    public Entry updateEntry(Entry e) {
-        if (e == null || e.getRecordStoreId() == -1) return null;
+
+    public byte addEntryToRecordStore(byte[] entrybytes) {
+        byte recordStoreId = -1;
         try {
             recordStore = RecordStore.openRecordStore("Hotpants",true);
-            byte[] entryBytes = e.toBytes();
-            recordStore.setRecord(e.getRecordStoreId(), entryBytes, 0, entryBytes.length);
+            recordStore.setMode(RecordStore.AUTHMODE_PRIVATE, true);
+            recordStoreId = (byte)recordStore.getNextRecordID();
+            recordStore.addRecord(entrybytes, 0, entrybytes.length);
             recordStore.closeRecordStore();
-            System.out.println("Entry "+ e.getId() + " updated to record store.");
-        } catch (RecordStoreException ex) {
-            System.out.println("Could not update entry " + e.getId() + ": " + ex.getMessage());
+        } catch (RecordStoreException e) {
+            System.out.println("Could not save entry: " + e.getMessage());
         }
+        return recordStoreId;
+    }
+        
+    public Otp updateEntry(Otp e) {
+        if (e == null || e.getRecordStoreId() == -1) return null;
+        updateEntryByte(e.getRecordStoreId(), e.toBytes());
         return e;
     }
     
-    public void deleteEntry(int recordStoreId) {
-        if (recordStoreId == -1) return;
+    private void updateEntryByte(int recordStoreId, byte[] entryBytes) {
         try {
             recordStore = RecordStore.openRecordStore("Hotpants",true);
+            recordStore.setMode(RecordStore.AUTHMODE_PRIVATE, true);
+            recordStore.setRecord(recordStoreId, entryBytes, 0, entryBytes.length);
+            recordStore.closeRecordStore();
+        } catch (RecordStoreException ex) {
+            System.out.println("Could not update entry: " + ex.getMessage());
+        }
+    }
+    
+    public void deleteEntry(int recordStoreId) {
+        try {
+            recordStore = RecordStore.openRecordStore("Hotpants",true);
+            recordStore.setMode(RecordStore.AUTHMODE_PRIVATE, true);
             recordStore.deleteRecord(recordStoreId);
             recordStore.closeRecordStore();
         } catch (RecordStoreException ex) {
@@ -77,6 +110,7 @@ public class Configuration {
     public void flushConfiguration() {
         try {
             recordStore = RecordStore.openRecordStore("Hotpants",true);
+            recordStore.setMode(RecordStore.AUTHMODE_PRIVATE, true);
             RecordEnumeration re = recordStore.enumerateRecords(null, null, false);
             while (re.hasNextElement()) {
                 recordStore.deleteRecord(re.nextRecordId());

@@ -17,7 +17,7 @@ public class UpdateTask extends TimerTask {
     }
     
     public final void run() {
-        midlet.getMainForm().updateAllEntries(Calendar.getInstance());
+        midlet.getMainForm().refreshAllEntries(Calendar.getInstance());
     }
 }
  

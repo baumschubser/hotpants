@@ -15,6 +15,7 @@ public class Midlet extends MIDlet {
     private MainForm mainForm;
     private EntryForm entryForm;
     private UpdateTask updateTask;
+    private Alert alert;
     
     public Midlet() {
     }
@@ -40,6 +41,10 @@ public class Midlet extends MIDlet {
         Display.getDisplay(this).setCurrent(entryForm);
     }
     
+    public void showHotpEntryForm() {
+        Display.getDisplay(this).setCurrent(entryForm);
+    }
+    
     public MainForm getMainForm() {
         return mainForm;
     }
@@ -56,5 +61,12 @@ public class Midlet extends MIDlet {
     }
     
     public void destroyApp(boolean unconditional) {
+    }
+    
+    public void alertError(String msg, Displayable next) {
+        alert = new Alert("Error");
+        alert.setTimeout(2000);
+        alert.setString(msg);
+        Display.getDisplay(this).setCurrent(alert, next);
     }
 }

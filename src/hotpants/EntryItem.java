@@ -18,37 +18,61 @@ import org.bouncycastle.crypto.params.KeyParameter;
  *
  * @author matti
  */
-public class EntryItem extends Gauge implements ItemCommandListener{
-    Entry entry;
+public class EntryItem implements ItemCommandListener {
+    Otp entry;
     Midlet midlet;
+    Item item;
     
     public EntryItem(String label, boolean interactive, int maxValue, int initialValue) {
-        super(label, interactive, maxValue, initialValue);
+        item = new Gauge(label, interactive, maxValue, initialValue);
     }    
     
-    public EntryItem(Entry e, Midlet m) {
-        super("", false, e.getRefreshSeconds(), e.getRefreshSeconds());
+    public EntryItem(Otp e, Midlet m) {
+        if (Configuration.TOTP == e.getOtpType()) {
+            TotpEntry t = (TotpEntry)e;
+            item = new Gauge("", false, t.getRefreshSeconds(), t.getRefreshSeconds());
+        } else if (Configuration.HOTP == e.getOtpType()) {
+            HotpEntry h = (HotpEntry)e;
+            item = new StringItem(e.getId(), "");
+        }
         entry = e;
         midlet = m;
-        setLabel(getPinLabel());
+        item.setLabel(getPinLabel());
     }
     
-    public Entry getEntry() {
+    public Item getItem() {
+        return item;
+    }
+    
+    public Otp getOtp() {
         return entry;
     }
     
+    public void setOtp(Otp o) {
+        if (entry.getOtpType() != o.getOtpType()) return;
+        entry = o;
+        item.setLabel(getPinLabel());
+    }
+    
     public void update(Calendar cal) {
-        setValue(cal.get(Calendar.SECOND) % getMaxValue());
-        if (getValue() < 1) {
-            setLabel(getPinLabel());
-        }
+        if (Configuration.TOTP == entry.getOtpType()) {
+            Gauge g = (Gauge)item;
+            g.setValue(cal.get(Calendar.SECOND) % g.getMaxValue());
+            if (g.getValue() < 1) {
+                item.setLabel(getPinLabel());
+            }
+        } 
     }
     
     private String getPinLabel() {
-        return entry.getId() + ": " + computePin(entry.getSecret(), null);
+        int counter = -1;
+        if (Configuration.HOTP == entry.getOtpType()) {
+            counter = ((HotpEntry)entry).getCounter();
+        }
+        return entry.getId() + ": " + computePin(entry.getSecret(), counter);
     }
 
-    private static String computePin(String secret, Long counter) {
+    private static String computePin(String secret, int counter) {
         try {
             final byte[] keyBytes = Base32String.decode(secret);
             Mac mac = new HMac(new SHA1Digest());
@@ -56,10 +80,10 @@ public class EntryItem extends Gauge implements ItemCommandListener{
             PasscodeGenerator pcg = new PasscodeGenerator(mac);
 
             String pin;
-            if (counter == null) { // time-based totp
+            if (counter == -1) { // time-based totp
                 pin =  pcg.generateTimeoutCode();
             } else { // counter-based hotp
-                pin = pcg.generateResponseCode(counter.longValue());
+                pin = pcg.generateResponseCode(new Long(counter).longValue());
             }
             String formattedPin = pin.substring(0, 3) + " "+pin.substring(3);
             return formattedPin;
@@ -71,17 +95,21 @@ public class EntryItem extends Gauge implements ItemCommandListener{
     public void commandAction(Command c, Item item) {
         if (c.getCommandType() == Command.OK) { // Edit
             EntryCommand cmd = (EntryCommand)c;
-            midlet.getEntryForm().setEntry(cmd.getEntry());
+            if (Configuration.TOTP == cmd.getEntryType()) {
+                midlet.getEntryForm().setEntry((TotpEntry)cmd.getEntry());
+            } else if (Configuration.HOTP == cmd.getEntryType()) {
+                midlet.getEntryForm().setEntry(cmd.getEntry());
+            }
             midlet.showEntryForm();
         } else if (c.getCommandType() == Command.STOP) { // Delete
-            EntryCommand cmd = (EntryCommand)c;
-            int recordStoreId = cmd.getEntry().getRecordStoreId();
-            midlet.getConfiguration().deleteEntry(recordStoreId);
-            midlet.getMainForm().deleteEntry(recordStoreId);
+            midlet.getMainForm().deleteEntry(this);
+        } else if (c.getCommandType() == Command.SCREEN) { // Next HOTP PIN
+            if (Configuration.HOTP == getOtp().getOtpType()) {
+                ((HotpEntry)entry).nextPin();
+                item.setLabel(getPinLabel());
+                midlet.getConfiguration().updateEntry(entry);
+            }
         }
     }    
 }
-
-//        f.addCommand(new EntryCommand("Edit", Command.OK, 2, entry));
-  //      f.addCommand(new EntryCommand("Delete", Command.STOP, 2, entry));
 

@@ -8,18 +8,22 @@ import javax.microedition.lcdui.Command;
 
 
 public class EntryCommand extends Command {
-    Entry entry;
+    Otp entry;
     
     public EntryCommand(String label, int commandType, int priority) {
         super(label, commandType, priority);
     }
     
-    public EntryCommand(String label, int commandType, int priority, Entry e) {
+    public EntryCommand(String label, int commandType, int priority, Otp e, int entryType) {
         super(label, commandType, priority);
         entry = e;
     }
     
-    public Entry getEntry() {
+    public Otp getEntry() {
         return entry;
+    }
+    
+    public int getEntryType() {
+        return entry != null ? entry.getOtpType() : -1;
     }
 }
