@@ -17,7 +17,10 @@ Just add HOTP and TOTP providers. Since Hotpants can not scan QR codes (yet?), y
 To generate the next HOTP password, just select the entry an click "New Pin".
 
 ## Todo
-Maybe add QR scan?
+
+* Validate secret
+* Make hashing algorithm selectable (SHA1 at the moment)
+* Maybe add QR scan?
 
 ## Credit
 [Evsinev](https://github.com/evsinev) built something that I could build on.
