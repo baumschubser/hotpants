@@ -1,8 +1,8 @@
 MIDlet-1: Midlet,/icon.png,hotpants.Midlet
-MIDlet-Jar-Size: 53648
+MIDlet-Jar-Size: 54801
 MIDlet-Jar-URL: Hotpants.jar
 MIDlet-Name: Hotpants
 MIDlet-Vendor: Matthias Clausen
-MIDlet-Version: 1.1
+MIDlet-Version: 1.2
 MicroEdition-Configuration: CLDC-1.1
 MicroEdition-Profile: MIDP-2.1

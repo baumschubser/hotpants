@@ -22,6 +22,7 @@ public class EntryItem implements ItemCommandListener {
     Otp entry;
     Midlet midlet;
     Item item;
+    Command confirmationYes, confirmationNo;
     
     public EntryItem(String label, boolean interactive, int maxValue, int initialValue) {
         item = new Gauge(label, interactive, maxValue, initialValue);
@@ -38,6 +39,8 @@ public class EntryItem implements ItemCommandListener {
         entry = e;
         midlet = m;
         item.setLabel(getPinLabel());
+        confirmationYes = new Command("Yes", Command.OK, 1);
+        confirmationNo = new Command("No", Command.CANCEL, 2);
     }
     
     public Item getItem() {
@@ -62,6 +65,14 @@ public class EntryItem implements ItemCommandListener {
                 item.setLabel(getPinLabel());
             }
         } 
+    }
+    
+    public Command getYesCommand() {
+        return confirmationYes;
+    }
+    
+    public Command getNoCommand() {
+        return confirmationNo;
     }
     
     private String getPinLabel() {
@@ -93,6 +104,15 @@ public class EntryItem implements ItemCommandListener {
     }
     
     public void commandAction(Command c, Item item) {
+        if (c == confirmationYes) { // confirmed item delete
+            midlet.getMainForm().deleteEntry(this);
+            Display.getDisplay(midlet).setCurrent(midlet.getMainForm());
+            return;
+        } else if (c == confirmationNo) { // no item delete
+            Display.getDisplay(midlet).setCurrent(midlet.getMainForm());
+            return;
+        }
+
         if (c.getCommandType() == Command.OK) { // Edit
             EntryCommand cmd = (EntryCommand)c;
             if (Configuration.TOTP == cmd.getEntryType()) {
@@ -102,7 +122,8 @@ public class EntryItem implements ItemCommandListener {
             }
             midlet.showEntryForm();
         } else if (c.getCommandType() == Command.STOP) { // Delete
-            midlet.getMainForm().deleteEntry(this);
+            Display.getDisplay(midlet).setCurrent(new ConfirmationDialog(midlet, this, "Attention", "Do you want to delete this entry?").getDisplayable());
+            //midlet.getMainForm().deleteEntry(this);
         } else if (c.getCommandType() == Command.SCREEN) { // Next HOTP PIN
             if (Configuration.HOTP == getOtp().getOtpType()) {
                 ((HotpEntry)entry).nextPin();
@@ -110,6 +131,6 @@ public class EntryItem implements ItemCommandListener {
                 midlet.getConfiguration().updateEntry(entry);
             }
         }
-    }    
+    }
 }
 
