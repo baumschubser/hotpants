@@ -29,13 +29,8 @@ public class EntryItem implements ItemCommandListener {
     }    
     
     public EntryItem(Otp e, Midlet m) {
-        if (Configuration.TOTP == e.getOtpType()) {
-            TotpEntry t = (TotpEntry)e;
-            item = new Gauge("", false, t.getRefreshSeconds(), t.getRefreshSeconds());
-        } else if (Configuration.HOTP == e.getOtpType()) {
-            HotpEntry h = (HotpEntry)e;
-            item = new StringItem(e.getId(), "");
-        }
+        setupItem(e);
+
         entry = e;
         midlet = m;
         item.setLabel(getPinLabel());
@@ -54,7 +49,22 @@ public class EntryItem implements ItemCommandListener {
     public void setOtp(Otp o) {
         if (entry.getOtpType() != o.getOtpType()) return;
         entry = o;
+        setupItem(o);
         item.setLabel(getPinLabel());
+    }
+    
+    private void setupItem(Otp e) {
+        if (Configuration.TOTP == e.getOtpType()) {
+            TotpEntry t = (TotpEntry)e;
+            item = new Gauge("", false, t.getRefreshSeconds(), t.getRefreshSeconds());
+        } else if (Configuration.HOTP == e.getOtpType()) {
+            HotpEntry h = (HotpEntry)e;
+            item = new StringItem(e.getId(), "");
+            item.setDefaultCommand(new EntryCommand("New PIN", Command.SCREEN, 1, e, e.getOtpType()));
+        }
+        item.setDefaultCommand(new EntryCommand("Edit", Command.OK, 2, e, e.getOtpType()));
+        item.addCommand(new EntryCommand("Delete", Command.STOP, 3, e, e.getOtpType()));
+        item.setItemCommandListener(this);
     }
     
     public void update(Calendar cal) {

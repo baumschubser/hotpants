@@ -40,15 +40,14 @@ public class MainForm extends Form implements CommandListener {
         deleteAll();
         Enumeration keys = entries.keys();
         while (keys.hasMoreElements()) {
-            addEntryItemToForm(new EntryItem((Otp)entries.get(keys.nextElement()), midlet));
+            entryItems.addElement(new EntryItem((Otp)entries.get(keys.nextElement()), midlet));
         }
+        rebuildList();
     }
     
     public void addEntry(Otp e) {
-        if (entryItems.size() == 0) {
-            this.deleteAll();
-        }
-        addEntryItemToForm(new EntryItem(e, midlet));
+        entryItems.addElement(new EntryItem(e, midlet));
+        rebuildList();
     }
     
     public void deleteEntry(EntryItem item) {
@@ -64,17 +63,16 @@ public class MainForm extends Form implements CommandListener {
         if (this.size() == 0) append(textItem);
     }
     
-    private void addEntryItemToForm(EntryItem e) {
-        entryItems.addElement(e);
-        Item item = e.getItem();
-        append(item);
-        int otypType = e.getOtp().getOtpType();
-        item.setDefaultCommand(new EntryCommand("Edit", Command.OK, 2, e.getOtp(), otypType));
-        item.addCommand(new EntryCommand("Delete", Command.STOP, 3, e.getOtp(), otypType));
-        if (Configuration.HOTP == otypType) {
-            item.setDefaultCommand(new EntryCommand("New PIN", Command.SCREEN, 1, e.getOtp(), otypType));
+    private void rebuildList() {
+        deleteAll();
+        sortEntries();
+        for (int i = 0; i < entryItems.size(); i++) {
+            addEntryToForm((EntryItem)entryItems.elementAt(i));
         }
-        item.setItemCommandListener(e);
+    }
+    
+    private void addEntryToForm(EntryItem entry) {
+            append(entry.item);        
     }
     
     public Form getForm() {
@@ -87,11 +85,26 @@ public class MainForm extends Form implements CommandListener {
             EntryItem item = (EntryItem)entryItems.elementAt(i);
             if (item.getOtp().getRecordStoreId() == e.getRecordStoreId()) {
                 item.setOtp(e);
-                //EntryItem newItem = new EntryItem(e, midlet);
-                //entryItems.setElementAt(newItem, i);
-                //this.set(i, newItem.getItem());
             }
         }
+        rebuildList();
+    }
+    
+    // sort list alphabetically
+    private void sortEntries() {
+        Vector sortedEntries = new Vector(entryItems.size());
+        while (entryItems.size() > 0) {
+            EntryItem lowest = (EntryItem)entryItems.firstElement();
+            for (int j = 1; j < entryItems.size(); j++) {
+                EntryItem cmp = (EntryItem)entryItems.elementAt(j);
+                if (lowest.entry.getId().compareTo(cmp.entry.getId()) > 0) {
+                    lowest = cmp;
+                }
+            }
+            sortedEntries.addElement(lowest);
+            entryItems.removeElement(lowest);
+        }
+        entryItems = sortedEntries;
     }
     
     public void refreshAllEntries(Calendar cal) {
