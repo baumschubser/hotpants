@@ -1,7 +1,3 @@
-/*
-* Author: Matthias Clausen <matthiasclausen@posteo.de>
-* License: GPL 2
-*/
 package hotpants;
 
 import com.google.authenticator.blackberry.Base32String;
@@ -14,10 +10,6 @@ import org.bouncycastle.crypto.digests.SHA1Digest;
 import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.KeyParameter;
 
-/**
- *
- * @author matti
- */
 public class EntryItem implements ItemCommandListener {
     Otp entry;
     Midlet midlet;

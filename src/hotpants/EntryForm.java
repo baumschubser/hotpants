@@ -1,7 +1,3 @@
-/*
-* Author: Matthias Clausen <matthiasclausen@posteo.de>
-* License: GPL 2
-*/
 package hotpants;
 
 import java.util.Enumeration;
