@@ -1,10 +1,6 @@
-/*
-* Author: Matthias Clausen <matthiasclausen@posteo.de>
-* License: GPL 2
-*/
-
 package hotpants;
 
+import java.util.Calendar;
 import java.util.Timer;
 import javax.microedition.midlet.*;
 import javax.microedition.lcdui.*;
@@ -14,6 +10,7 @@ public class Midlet extends MIDlet {
     private Display display;
     private MainForm mainForm;
     private EntryForm entryForm;
+    private TimeConfigForm timeConfigForm;
     private UpdateTask updateTask;
     private Alert alert;
     
@@ -24,6 +21,7 @@ public class Midlet extends MIDlet {
         config = new Configuration();
         mainForm = new MainForm("Hotpants", this);
         entryForm = new EntryForm("", this);
+        timeConfigForm = new TimeConfigForm(this);
         mainForm.setEntries(config.getEntries());
         
         display = Display.getDisplay(this);
@@ -31,6 +29,14 @@ public class Midlet extends MIDlet {
         
         updateTask = new UpdateTask(this);
         new Timer().schedule(updateTask,0, 1000);   
+    }
+    
+    public void refreshAllEntries(Calendar c) {
+        Displayable current = Display.getDisplay(this).getCurrent();
+        if (current == mainForm)
+            mainForm.refreshAllEntries(c);
+        else if (current == timeConfigForm)
+            timeConfigForm.updateTimeLabel();
     }
     
     public void showMainForm() {
@@ -43,6 +49,10 @@ public class Midlet extends MIDlet {
     
     public void showHotpEntryForm() {
         Display.getDisplay(this).setCurrent(entryForm);
+    }
+    
+    public void showTimeConfigForm() {
+        Display.getDisplay(this).setCurrent(timeConfigForm);
     }
     
     public MainForm getMainForm() {

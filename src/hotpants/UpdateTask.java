@@ -1,8 +1,3 @@
-/*
-* Author: Matthias Clausen <matthiasclausen@posteo.de>
-* License: GPL 2
-*/
-
 package hotpants;
 
 import java.util.Calendar;
@@ -17,7 +12,7 @@ public class UpdateTask extends TimerTask {
     }
     
     public final void run() {
-        midlet.getMainForm().refreshAllEntries(Calendar.getInstance());
+        midlet.refreshAllEntries(Calendar.getInstance());
     }
 }
  

@@ -1,7 +1,3 @@
-/*
-* Author: Matthias Clausen <matthiasclausen@posteo.de>
-* License: GPL 2
-*/
 package hotpants;
 
 import java.util.Calendar;
@@ -13,7 +9,7 @@ import java.util.Vector;
 
 public class MainForm extends Form implements CommandListener {
     private StringItem textItem;
-    private Command exit, addTotp, addHotp, delete;
+    private Command exit, addTotp, addHotp, delete, editTimeConfig;
     private Midlet midlet;
     private Vector entryItems;
   
@@ -30,6 +26,9 @@ public class MainForm extends Form implements CommandListener {
         
         addHotp = new Command("Add HOTP", Command.ITEM, 2);
         addCommand(addHotp);
+        
+        editTimeConfig = new Command("Time configuration", Command.SCREEN, 2);
+        addCommand(editTimeConfig);
         
         textItem = new StringItem (null, "no entries");
         append(textItem);
@@ -120,10 +119,14 @@ public class MainForm extends Form implements CommandListener {
         }
         if (c == addTotp) {
             midlet.getEntryForm().newTotpEntry();
+            midlet.showEntryForm();
         } 
         if (c == addHotp) {
             midlet.getEntryForm().newHotpEntry();
+            midlet.showEntryForm();
         }
-        midlet.showEntryForm();
+        if (c == editTimeConfig) {
+            midlet.showTimeConfigForm();
+        }
     }
 }
