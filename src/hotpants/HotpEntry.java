@@ -106,7 +106,6 @@ public class HotpEntry implements Otp {
 
         byte b_recordStoreId = -1;
         byte count = 0;
-        int countercount = 0;
         try {
             for (int i = 0; i < bytes.length; i++) {
                 if (Configuration.DELIM != bytes[i]) {
@@ -120,14 +119,13 @@ public class HotpEntry implements Otp {
                     }
                     if (count == 3) {
                         b_counter.write(bytes[i]);
-                        countercount++;
                     }
                     if (count == 4) b_recordStoreId = bytes[i];
                 }
                 else count++;
             }
         } catch (IOException e) {
-            System.out.println("Could not read Configuration from record store. Out of memory?");
+            System.err.println("Could not read Configuration from record store. Out of memory?");
         }
         byte[] counterByteArray = b_counter_baos.toByteArray();
         ByteBuffer bb = ByteBuffer.wrap(counterByteArray);

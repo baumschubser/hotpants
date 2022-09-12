@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import javax.microedition.rms.*;
 import java.util.Hashtable;
+import util.IntToBytes;
 
 public class Configuration {
     private RecordStore recordStore;
@@ -34,14 +35,13 @@ public class Configuration {
                 } else if (Configuration.HOTP == type) {
                     HotpEntry e = HotpEntry.fromBytes(record);
                     entries.put(e.getId(), e);
-                    System.out.println("Read entry " + e.getId());
                 } else if (Configuration.TimeConfig == type) {
-                    //setTimeOffset(record);
+                    setTimeOffset(record);
                 }
             }
             recordStore.closeRecordStore();
         } catch (RecordStoreException e) {
-            System.out.println("Could not load configuration: " + e.getMessage());
+            System.err.println("Could not load configuration: " + e.getMessage());
         }
     }
     
@@ -50,31 +50,19 @@ public class Configuration {
         DataOutputStream b_id = new DataOutputStream(b_id_baos);
         ByteArrayOutputStream b_sec_baos = new ByteArrayOutputStream();
         DataOutputStream b_sec = new DataOutputStream(b_sec_baos);
-
         int section = 0;
-        try {
-            for (int i = 0; i < record.length; i++) {
-                if (Configuration.DELIM == record[i]) {
-                    section++;
-                    if (section == 1)
-                        offsetRecordId = ByteBuffer.wrap(b_id_baos.toByteArray()).getInt();
-                    continue;
-                }
-                switch (section) {
-                    case 0:
-                        b_id.write(record[i]);
-                        break;
-                    case 4:
-                        b_sec.write(record[i]);
-                }
+        for (int i = 0; i < record.length; i++) {
+            if (Configuration.DELIM == record[i]) {
+                section++;
             }
-            timeOffset = ByteBuffer.wrap(b_sec_baos.toByteArray()).getInt();
-            return;
-        } catch (IOException e) {
-            System.out.println("Could not read offset seconds. No more memory?");
+            switch (section) {
+                case 3:
+                    timeOffset = record[i] - 120;
+                    break;
+                case 4:
+                    offsetRecordId = record[i];
+            }
         }
-        timeOffset = 0;
-        offsetRecordId = -1;
     }
     
     private int getEntryTypeFromRecordBytes(byte[] record) {
@@ -111,7 +99,7 @@ public class Configuration {
             recordStore.addRecord(entrybytes, 0, entrybytes.length);
             recordStore.closeRecordStore();
         } catch (RecordStoreException e) {
-            System.out.println("Could not save entry: " + e.getMessage());
+            System.err.println("Could not save entry: " + e.getMessage());
         }
         return recordStoreId;
     }
@@ -122,16 +110,32 @@ public class Configuration {
         return e;
     }
     
-    public void updateOffsetSeconds(int seconds) {
-        timeOffset = seconds;
-        byte[] offsetSecondsArray = ByteBuffer.allocateDirect(4).putInt(timeOffset).array();
-        
+    public void updateOffsetSeconds(byte seconds) {
         try {
+            timeOffset = seconds;
+            byte[] record = new byte[9];
+            
             recordStore = RecordStore.openRecordStore("Hotpants",true);
             recordStore.setMode(RecordStore.AUTHMODE_PRIVATE, true);
-            if (offsetRecordId == -1)
+            boolean isNew = offsetRecordId == -1;
+            if (isNew)
                 offsetRecordId = recordStore.getNextRecordID();
-            recordStore.setRecord(offsetRecordId, offsetSecondsArray, 0, offsetSecondsArray.length);
+
+            record[0] = 0;
+            record[1] = DELIM;
+            record[2] = 0;
+            record[3] = DELIM;
+            record[4] = TimeConfig;
+            record[5] = DELIM;
+            record[6] = (byte)(seconds + 120);
+            record[7] = DELIM;
+            record[8] = (byte)offsetRecordId;
+            
+            if (isNew)
+                offsetRecordId = recordStore.addRecord(record, 0, record.length);
+            else
+                recordStore.setRecord(offsetRecordId, record, 0, record.length);
+            recordStore.closeRecordStore();
         } catch (RecordStoreException e) {
             System.err.println("Could not update offset seconds. " + e.getMessage());
         }
@@ -148,7 +152,7 @@ public class Configuration {
             recordStore.setRecord(recordStoreId, entryBytes, 0, entryBytes.length);
             recordStore.closeRecordStore();
         } catch (RecordStoreException ex) {
-            System.out.println("Could not update entry: " + ex.getMessage());
+            System.err.println("Could not update entry: " + ex.getMessage());
         }
     }
     
@@ -159,7 +163,7 @@ public class Configuration {
             recordStore.deleteRecord(recordStoreId);
             recordStore.closeRecordStore();
         } catch (RecordStoreException ex) {
-            System.out.println("Could not delete entry: " + ex.getMessage());
+            System.err.println("Could not delete entry: " + ex.getMessage());
         }
     }
     
@@ -173,7 +177,7 @@ public class Configuration {
             }
             recordStore.closeRecordStore();
         } catch (RecordStoreException e) {
-            System.out.println("Could not flush configuration: " + e.getMessage());
+            System.err.println("Could not flush configuration: " + e.getMessage());
         }
     }
     

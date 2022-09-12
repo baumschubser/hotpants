@@ -85,7 +85,7 @@ public class EntryItem implements ItemCommandListener {
         return entry.getId() + ": " + computePin(entry.getSecret(), counter);
     }
 
-    private static String computePin(String secret, int counter) {
+    private String computePin(String secret, int counter) {
         try {
             final byte[] keyBytes = Base32String.decode(secret);
             Mac mac = new HMac(new SHA1Digest());
@@ -93,10 +93,11 @@ public class EntryItem implements ItemCommandListener {
             PasscodeGenerator pcg = new PasscodeGenerator(mac);
 
             String pin;
+            long currentTimeMillis = System.currentTimeMillis() + (midlet.getConfiguration().getOffsetSeconds() * 1000);
             if (counter == -1) { // time-based totp
-                pin =  pcg.generateTimeoutCode();
+                pin =  pcg.generateTimeoutCode(currentTimeMillis);
             } else { // counter-based hotp
-                pin = pcg.generateResponseCode(new Long(counter).longValue());
+                pin = pcg.generateResponseCode(new Long(counter).longValue(), currentTimeMillis);
             }
             String formattedPin = pin.substring(0, 3) + " "+pin.substring(3);
             return formattedPin;

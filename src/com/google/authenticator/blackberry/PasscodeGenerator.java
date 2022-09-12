@@ -109,8 +109,8 @@ public class PasscodeGenerator {
   /**
    * @return A decimal timeout code
    */
-  public String generateTimeoutCode() {
-    return generateResponseCode(clock.getCurrentInterval());
+  public String generateTimeoutCode(long currentTimeMillis) {
+    return generateResponseCode(clock.getCurrentInterval(currentTimeMillis), currentTimeMillis);
   }
 
   /**
@@ -118,7 +118,7 @@ public class PasscodeGenerator {
    * @return A decimal response code
    * @throws GeneralSecurityException If a JCE exception occur
    */
-  public String generateResponseCode(long challenge) {
+  public String generateResponseCode(long challenge, long currentTimeMillis) {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     DataOutput dout = new DataOutputStream(out);
     try {
@@ -172,8 +172,8 @@ public class PasscodeGenerator {
    * @param response A response to verify
    * @return True if the response is valid
    */
-  public boolean verifyResponseCode(long challenge, String response) {
-    String expectedResponse = generateResponseCode(challenge);
+  public boolean verifyResponseCode(long challenge, long currentTimeMillis, String response) {
+    String expectedResponse = generateResponseCode(challenge, currentTimeMillis);
     return expectedResponse.equals(response);
   }
 
@@ -185,9 +185,9 @@ public class PasscodeGenerator {
    * @param timeoutCode The timeout code
    * @return True if the timeout code is valid
    */
-  public boolean verifyTimeoutCode(String timeoutCode) {
+  public boolean verifyTimeoutCode(String timeoutCode, long currentTimeMillis) {
     return verifyTimeoutCode(timeoutCode, ADJACENT_INTERVALS,
-        ADJACENT_INTERVALS);
+        ADJACENT_INTERVALS, currentTimeMillis);
   }
 
   /**
@@ -201,20 +201,20 @@ public class PasscodeGenerator {
    * @return True if the timeout code is valid
    */
   public boolean verifyTimeoutCode(String timeoutCode, int pastIntervals,
-      int futureIntervals) {
-    long currentInterval = clock.getCurrentInterval();
-    String expectedResponse = generateResponseCode(currentInterval);
+      int futureIntervals, long currentTimeMillis) {
+    long currentInterval = clock.getCurrentInterval(currentTimeMillis);
+    String expectedResponse = generateResponseCode(currentInterval, currentTimeMillis);
     if (expectedResponse.equals(timeoutCode)) {
       return true;
     }
     for (int i = 1; i <= pastIntervals; i++) {
-      String pastResponse = generateResponseCode(currentInterval - i);
+      String pastResponse = generateResponseCode(currentInterval - i, currentTimeMillis);
       if (pastResponse.equals(timeoutCode)) {
         return true;
       }
     }
     for (int i = 1; i <= futureIntervals; i++) {
-      String futureResponse = generateResponseCode(currentInterval + i);
+      String futureResponse = generateResponseCode(currentInterval + i, currentTimeMillis);
       if (futureResponse.equals(timeoutCode)) {
         return true;
       }
@@ -226,8 +226,8 @@ public class PasscodeGenerator {
     /*
      * @return The current interval
      */
-    public long getCurrentInterval() {
-      long currentTimeSeconds = System.currentTimeMillis() / 1000;
+    public long getCurrentInterval(long currentTimeMillis) {
+      long currentTimeSeconds = currentTimeMillis / 1000;
       return currentTimeSeconds / getIntervalPeriod();
     }
 
@@ -239,6 +239,6 @@ public class PasscodeGenerator {
   // To facilitate injecting a mock clock
   interface IntervalClock {
     int getIntervalPeriod();
-    long getCurrentInterval();
+    long getCurrentInterval(long currentTimeMillis);
   }
 }

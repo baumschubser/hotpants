@@ -130,7 +130,7 @@ public class TotpEntry implements Otp {
                 else count++;
             }
         } catch (IOException e) {
-            System.out.println("Could not read Configuration from record store. Out of memory?");
+            System.err.println("Could not read Configuration from record store. Out of memory?");
         }
         return new TotpEntry(
                 b_id_baos.toByteArray(), 
