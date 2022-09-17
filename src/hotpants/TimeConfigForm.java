@@ -17,7 +17,7 @@ public class TimeConfigForm  extends Form implements CommandListener, ItemStateL
     private final Midlet midlet;
     private final Command cancel, save;
     private final Gauge secondsInput;
-    private int offset;
+    private byte offset;
     private final Calendar displayedTime;
     private final StringItem helpText;
     
@@ -64,14 +64,14 @@ public class TimeConfigForm  extends Form implements CommandListener, ItemStateL
 
     public void commandAction(Command c, Displayable d) {
         if (c == save) {
-            midlet.getConfiguration().updateOffsetSeconds((byte)offset);
+            midlet.getConfiguration().updateOffsetSeconds(offset);
         }
         midlet.showMainForm();
     }
 
     public void itemStateChanged(Item item) {
         if (item == secondsInput) {
-            offset = secondsInput.getValue() - 120;
+            offset = (byte)(secondsInput.getValue() - 120);
             updateTimeLabel();
         }
     }

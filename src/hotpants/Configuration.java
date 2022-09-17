@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import javax.microedition.rms.*;
 import java.util.Hashtable;
-import util.IntToBytes;
 
 public class Configuration {
     private RecordStore recordStore;
@@ -15,7 +14,7 @@ public class Configuration {
     public static final byte TOTP = 1;
     public static final byte HOTP = 2;
     public static final byte TimeConfig = 3;
-    private int timeOffset = 0;
+    private byte timeOffset = 0;
     private int offsetRecordId = -1;
     
     public Configuration() {
@@ -25,9 +24,7 @@ public class Configuration {
             recordStore.setMode(RecordStore.AUTHMODE_PRIVATE, false);
             RecordEnumeration re = recordStore.enumerateRecords(null, null, false);
             while (re.hasNextElement()) {
-                int recId = re.nextRecordId();
-                byte[] record = recordStore.getRecord(recId);
-                record[record.length-1] = (byte)recId;
+                byte[] record = re.nextRecord();
                 int type = getEntryTypeFromRecordBytes(record);
                 if (Configuration.TOTP == type) {
                     TotpEntry e = TotpEntry.fromBytes(record);
@@ -46,23 +43,13 @@ public class Configuration {
     }
     
     private void setTimeOffset(byte[] record) {
-        ByteArrayOutputStream b_id_baos = new ByteArrayOutputStream();
-        DataOutputStream b_id = new DataOutputStream(b_id_baos);
-        ByteArrayOutputStream b_sec_baos = new ByteArrayOutputStream();
-        DataOutputStream b_sec = new DataOutputStream(b_sec_baos);
-        int section = 0;
-        for (int i = 0; i < record.length; i++) {
-            if (Configuration.DELIM == record[i]) {
-                section++;
-            }
-            switch (section) {
-                case 3:
-                    timeOffset = record[i] - 120;
-                    break;
-                case 4:
-                    offsetRecordId = record[i];
-            }
+        if (record.length != 9) {
+            System.err.println("Corrupt time offset configuration entry.");
+            return;
         }
+        timeOffset = record[6];
+        offsetRecordId = record[8];
+        System.out.println("Time offset from config: " + timeOffset);
     }
     
     private int getEntryTypeFromRecordBytes(byte[] record) {
@@ -114,7 +101,6 @@ public class Configuration {
         try {
             timeOffset = seconds;
             byte[] record = new byte[9];
-            
             recordStore = RecordStore.openRecordStore("Hotpants",true);
             recordStore.setMode(RecordStore.AUTHMODE_PRIVATE, true);
             boolean isNew = offsetRecordId == -1;
@@ -127,7 +113,7 @@ public class Configuration {
             record[3] = DELIM;
             record[4] = TimeConfig;
             record[5] = DELIM;
-            record[6] = (byte)(seconds + 120);
+            record[6] = seconds;
             record[7] = DELIM;
             record[8] = (byte)offsetRecordId;
             
@@ -141,7 +127,7 @@ public class Configuration {
         }
     }
     
-    public int getOffsetSeconds() {
+    public byte getOffsetSeconds() {
         return timeOffset;
     }
     
