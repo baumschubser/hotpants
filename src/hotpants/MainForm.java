@@ -9,7 +9,7 @@ import java.util.Vector;
 
 public class MainForm extends Form implements CommandListener {
     private StringItem textItem;
-    private Command exit, addTotp, addHotp, delete, editTimeConfig;
+    private Command exit, addTotp, addHotp, delete, editTimeConfig, scanQRcode;
     private Midlet midlet;
     private Vector entryItems;
   
@@ -17,14 +17,17 @@ public class MainForm extends Form implements CommandListener {
         super(title);
         midlet = m;
         entryItems = new Vector();
+        
+        scanQRcode = new Command("Scan code", Command.OK, 1);
+        addCommand(scanQRcode);
 
         exit = new Command("Exit", Command.EXIT, 1);
         addCommand(exit);
 
-        addTotp = new Command("Add TOTP", Command.ITEM, 2);
+        addTotp = new Command("Add TOTP", Command.SCREEN, 2);
         addCommand(addTotp);
         
-        addHotp = new Command("Add HOTP", Command.ITEM, 2);
+        addHotp = new Command("Add HOTP", Command.SCREEN, 2);
         addCommand(addHotp);
         
         editTimeConfig = new Command("Time configuration", Command.SCREEN, 2);
@@ -71,7 +74,7 @@ public class MainForm extends Form implements CommandListener {
     }
     
     private void addEntryToForm(EntryItem entry) {
-            append(entry.item);        
+        append(entry.item);        
     }
     
     public Form getForm() {
@@ -127,6 +130,9 @@ public class MainForm extends Form implements CommandListener {
         }
         if (c == editTimeConfig) {
             midlet.showTimeConfigForm();
+        }
+        if (c == scanQRcode) {
+            midlet.showScanForm();
         }
     }
 }

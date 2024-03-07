@@ -10,6 +10,7 @@ public class Midlet extends MIDlet {
     private Display display;
     private MainForm mainForm;
     private EntryForm entryForm;
+    private ScanForm scanForm;
     private TimeConfigForm timeConfigForm;
     private UpdateTask updateTask;
     private Alert alert;
@@ -21,6 +22,7 @@ public class Midlet extends MIDlet {
         config = new Configuration();
         mainForm = new MainForm("Hotpants", this);
         entryForm = new EntryForm("", this);
+        scanForm = new ScanForm(this);
         timeConfigForm = new TimeConfigForm(this);
         mainForm.setEntries(config.getEntries());
         
@@ -53,6 +55,15 @@ public class Midlet extends MIDlet {
     
     public void showTimeConfigForm() {
         Display.getDisplay(this).setCurrent(timeConfigForm);
+    }
+    
+    public void showScanForm() {
+        Display.getDisplay(this).setCurrent(scanForm);
+        scanForm.showCamera();
+    }
+    
+    public ScanForm getScanForm() {
+        return scanForm;
     }
     
     public MainForm getMainForm() {
