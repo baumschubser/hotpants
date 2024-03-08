@@ -1,8 +1,10 @@
 MIDlet-1: Hotpants,/icon32.png,hotpants.Midlet
-MIDlet-Jar-Size: 25087
+MIDlet-Jar-Size: 78017
 MIDlet-Jar-URL: Hotpants.jar
 MIDlet-Name: Hotpants
+MIDlet-Permissions: javax.microedition.media.control.VideoControl.getSnapshot
 MIDlet-Vendor: Matthias Clausen
-MIDlet-Version: 1.4
+MIDlet-Version: 1.4.1
 MicroEdition-Configuration: CLDC-1.1
 MicroEdition-Profile: MIDP-2.0
+Nokia-MIDlet-On-Screen-Keypad: no

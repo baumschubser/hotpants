@@ -29,7 +29,7 @@ public class QRCodeParser implements Runnable {
             return;
         }
         Configuration.getInstance().addEntry(res);
-        Display.getDisplay(midlet).setCurrent(new Alert(res.getId(), "Import successful.", null, AlertType.INFO), midlet.getMainForm());
+        Display.getDisplay(midlet).setCurrent(new Alert(res.getLabel(), "Import successful.", null, AlertType.INFO), midlet.getMainForm());
     }
     
     public Otp getOtp() {

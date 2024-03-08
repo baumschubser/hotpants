@@ -26,10 +26,10 @@ public class Configuration {
                 int type = getEntryTypeFromRecordBytes(record);
                 if (Configuration.TOTP == type) {
                     TotpEntry e = TotpEntry.fromBytes(record);
-                    entries.put(e.getId(), e);
+                    entries.put(new Integer(e.getRecordStoreId()), e);
                 } else if (Configuration.HOTP == type) {
                     HotpEntry e = HotpEntry.fromBytes(record);
-                    entries.put(e.getId(), e);
+                    entries.put(new Integer(e.getRecordStoreId()), e);
                 } else if (Configuration.TimeConfig == type) {
                     setTimeOffset(record);
                 }
@@ -75,8 +75,9 @@ public class Configuration {
     
     public Otp addEntry(Otp entry) {
         byte recId = addEntryToRecordStore(entry.toBytes());
+        System.out.println("Adding entry " + recId);
         entry.setRecordStoreId(recId);
-        entries.put(entry.getId(), entry);
+        entries.put(new Integer(recId), entry);
         return entry;
     }
 
@@ -95,8 +96,10 @@ public class Configuration {
     }
         
     public Otp updateEntry(Otp e) {
+        System.out.println("Updating entry " + e.getRecordStoreId());
         if (e == null || e.getRecordStoreId() == -1) return null;
         updateEntryByte(e.getRecordStoreId(), e.toBytes());
+        entries.put(new Integer(e.getRecordStoreId()), e);
         return e;
     }
     
@@ -146,6 +149,8 @@ public class Configuration {
     }
     
     public void deleteEntry(int recordStoreId) {
+        System.out.println("Deleting entry " + recordStoreId);
+        entries.remove(new Integer(recordStoreId));
         try {
             recordStore = RecordStore.openRecordStore("Hotpants",true);
             recordStore.setMode(RecordStore.AUTHMODE_PRIVATE, true);
@@ -153,20 +158,6 @@ public class Configuration {
             recordStore.closeRecordStore();
         } catch (RecordStoreException ex) {
             System.err.println("Could not delete entry: " + ex.getMessage());
-        }
-    }
-    
-    public void flushConfiguration() {
-        try {
-            recordStore = RecordStore.openRecordStore("Hotpants",true);
-            recordStore.setMode(RecordStore.AUTHMODE_PRIVATE, true);
-            RecordEnumeration re = recordStore.enumerateRecords(null, null, false);
-            while (re.hasNextElement()) {
-                recordStore.deleteRecord(re.nextRecordId());
-            }
-            recordStore.closeRecordStore();
-        } catch (RecordStoreException e) {
-            System.err.println("Could not flush configuration: " + e.getMessage());
         }
     }
     

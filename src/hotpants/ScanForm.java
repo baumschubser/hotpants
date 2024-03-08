@@ -1,24 +1,15 @@
 package hotpants;
 
-import dk.onlinecity.qrr.client.CameraControl;
 import hotpants.qr.DecodeCanvas;
-import hotpants.qr.QRCodeParser;
-import hotpants.qr.CameraCanvas;
-import javax.microedition.lcdui.Alert;
-import javax.microedition.lcdui.AlertType;
-import javax.microedition.lcdui.Command;
-import javax.microedition.lcdui.CommandListener;
 import javax.microedition.lcdui.Display;
-import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Form;
 import javax.microedition.lcdui.Gauge;
 import javax.microedition.lcdui.Image;
 import javax.microedition.media.*;
 import javax.microedition.media.control.VideoControl;
 
-public class ScanForm extends Form implements CommandListener {
+public class ScanForm extends Form {
     private final Midlet midlet;
-    private Player player;
     private Gauge progress;
     
     public ScanForm(Midlet m) {
@@ -63,9 +54,6 @@ public class ScanForm extends Form implements CommandListener {
         }
     }
     
-    public void commandAction(Command c, Displayable d) {
-    }
-    
     public void setThumbnail(Image thumbnail) {
         this.deleteAll();
         this.append(thumbnail);
@@ -75,15 +63,5 @@ public class ScanForm extends Form implements CommandListener {
     
     public void setProgress(int percentage) {
         progress.setValue(percentage);
-    }
-    
-    public void setOtp(Otp otp) {
-        Configuration.getInstance().addEntry(otp);
-        midlet.getMainForm().addEntry(otp);
-        Display.getDisplay(midlet).setCurrent(new Alert("OTP created: " + otp.getId()), midlet.getMainForm());
-    }
-    
-    private Alert getWarning(String text) {
-        return new Alert("QR Code scan", text, null, AlertType.WARNING);
     }
 }

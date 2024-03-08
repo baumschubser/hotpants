@@ -3,14 +3,13 @@ package hotpants;
 import java.util.Calendar;
 import java.util.Enumeration;
 import javax.microedition.lcdui.*;
-import javax.microedition.midlet.*;
 import java.util.Hashtable;
 import java.util.Vector;
 
 public class MainForm extends Form implements CommandListener {
-    private StringItem textItem;
-    private Command exit, addTotp, addHotp, delete, editTimeConfig, scanQRcode;
-    private Midlet midlet;
+    private final StringItem textItem;
+    private final Command exit, addTotp, addHotp, editTimeConfig, scanQRcode;
+    private final Midlet midlet;
     private Vector entryItems;
   
     public MainForm(String title, Midlet m){
@@ -38,32 +37,14 @@ public class MainForm extends Form implements CommandListener {
         this.setCommandListener(this);
     }
     
-    public void setEntriesFromConfig() {
-        deleteAll();
+    public void updateEntriesFromConfig() {
+        entryItems.removeAllElements();
         Hashtable entries = Configuration.getInstance().getEntries();
         Enumeration keys = entries.keys();
         while (keys.hasMoreElements()) {
             entryItems.addElement(new EntryItem((Otp)entries.get(keys.nextElement()), midlet));
         }
         rebuildList();
-    }
-    
-    public void addEntry(Otp e) {
-        entryItems.addElement(new EntryItem(e, midlet));
-        rebuildList();
-    }
-    
-    public void deleteEntry(EntryItem item) {
-        for (int i = 0; i < size(); i++) {
-            if (get(i) == item.getItem()) {
-                int recId = item.getOtp().getRecordStoreId();
-                delete(i);
-                entryItems.removeElement(item);
-                Configuration.getInstance().deleteEntry(recId);
-                break;
-            }
-        }
-        if (this.size() == 0) append(textItem);
     }
     
     private void rebuildList() {
@@ -82,17 +63,6 @@ public class MainForm extends Form implements CommandListener {
         return (Form)this;
     }
     
-    public void updateEntry(Otp e) {
-        if (e == null) return;
-        for (int i = 0; i < entryItems.size(); i++) {
-            EntryItem item = (EntryItem)entryItems.elementAt(i);
-            if (item.getOtp().getRecordStoreId() == e.getRecordStoreId()) {
-                item.setOtp(e);
-            }
-        }
-        rebuildList();
-    }
-    
     // sort list alphabetically
     private void sortEntries() {
         Vector sortedEntries = new Vector(entryItems.size());
@@ -100,7 +70,7 @@ public class MainForm extends Form implements CommandListener {
             EntryItem lowest = (EntryItem)entryItems.firstElement();
             for (int j = 1; j < entryItems.size(); j++) {
                 EntryItem cmp = (EntryItem)entryItems.elementAt(j);
-                if (lowest.entry.getId().compareTo(cmp.entry.getId()) > 0) {
+                if (lowest.entry.getLabel().compareTo(cmp.entry.getLabel()) > 0) {
                     lowest = cmp;
                 }
             }
@@ -122,11 +92,11 @@ public class MainForm extends Form implements CommandListener {
             midlet.notifyDestroyed(); 
         }
         if (c == addTotp) {
-            midlet.getEntryForm().newTotpEntry();
+            midlet.getEntryForm().setEntry(new TotpEntry(""));
             midlet.showEntryForm();
         } 
         if (c == addHotp) {
-            midlet.getEntryForm().newHotpEntry();
+            midlet.getEntryForm().setEntry(new HotpEntry(""));
             midlet.showEntryForm();
         }
         if (c == editTimeConfig) {

@@ -1,10 +1,6 @@
 package hotpants;
 
-import java.util.Enumeration;
 import javax.microedition.lcdui.*;
-import javax.microedition.midlet.*;
-import java.util.Hashtable;
-import java.util.Vector;
 
 public class EntryForm extends Form implements CommandListener {
     private TextField idItem, secretItem, refreshSecondsItem, digitCountItem, counterItem;
@@ -13,6 +9,7 @@ public class EntryForm extends Form implements CommandListener {
     private TotpEntry totpEntry;
     private HotpEntry hotpEntry;
     private int entryType;
+    private int recordStoreId;
     
     public EntryForm(String title, Midlet m){
         super(title);
@@ -25,20 +22,6 @@ public class EntryForm extends Form implements CommandListener {
         addCommand(save);
         
         this.setCommandListener(this);
-    }
-    
-    public void newTotpEntry() {
-        entryType = Configuration.TOTP;
-        TotpEntry t = new TotpEntry("");
-        setCommonItems(t.getId(), t.getSecret());
-        this.setTotpItems(t);
-    }
-
-    public void newHotpEntry() {
-        entryType = Configuration.HOTP;
-        HotpEntry e = new HotpEntry("");
-        setCommonItems(e.getId(), e.getSecret());
-        setHotpItems(e);
     }
     
     private void setCommonItems(String id, String secret) {
@@ -67,9 +50,10 @@ public class EntryForm extends Form implements CommandListener {
         if (e == null) return;
 
         entryType = e.getOtpType();
+        recordStoreId = e.getRecordStoreId();
 
         deleteAll();
-        setCommonItems(e.getId(), e.getSecret());
+        setCommonItems(e.getLabel(), e.getSecret());
         if (Configuration.TOTP == e.getOtpType()) {
             hotpEntry = null;
             totpEntry = (TotpEntry)e;
@@ -91,19 +75,22 @@ public class EntryForm extends Form implements CommandListener {
         totpEntry = null;
         hotpEntry = null;
         entryType = -1;
+        recordStoreId = -1;
     }
         
     public void commandAction(Command c, Displayable d){
         if(c == cancel) {
             reset();
             midlet.showMainForm();
-        } else if (c.getCommandType() == Command.ITEM) {
+        } else if (c == save) {
             if (sanitation()) {
                 Configuration cfg = Configuration.getInstance();
-                if (totpEntry == null && hotpEntry == null) { // new entry
-                    midlet.getMainForm().addEntry(cfg.addEntry(newOtpFromInputs()));
+                if (
+                        (totpEntry == null || totpEntry.getRecordStoreId() == -1) &&
+                        (hotpEntry == null || hotpEntry.getRecordStoreId() == -1)) {
+                    midlet.addEntry(newOtpFromInputs());
                 } else { // update
-                    midlet.getMainForm().updateEntry(cfg.updateEntry(updateOtpFromInputs()));
+                    midlet.updateEntry(updateOtpFromInputs());
                 }
             }
             reset();
@@ -177,12 +164,12 @@ public class EntryForm extends Form implements CommandListener {
         if (Configuration.TOTP == entryType && totpEntry != null) {
             totpEntry.setDigitCount((byte)Integer.parseInt(digitCountItem.getString()));
             totpEntry.setRefreshSeconds((byte)Integer.parseInt(refreshSecondsItem.getString()));
-            totpEntry.setId(id);
+            totpEntry.setLabel(id);
             totpEntry.setSecret(secret);
             return totpEntry;
         } else if (Configuration.HOTP == entryType && hotpEntry != null) {
             hotpEntry.setCounter(Integer.parseInt(counterItem.getString()));
-            hotpEntry.setId(id);
+            hotpEntry.setLabel(id);
             hotpEntry.setSecret(secret);
             return hotpEntry;
         }

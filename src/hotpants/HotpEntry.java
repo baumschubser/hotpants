@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 public class HotpEntry implements Otp {
     private byte recordStoreId;
     private String secret;
-    private String id;
+    private String label;
     private int counter;
     
     public int getOtpType() {
@@ -16,7 +16,7 @@ public class HotpEntry implements Otp {
     }
     
     public HotpEntry(byte[] id, byte[] secret, int counter, byte recordStoreId) {
-        this.id = new String(id);
+        this.label = new String(id);
         this.secret = new String(secret);
         this.counter = counter;
         this.recordStoreId = recordStoreId;
@@ -25,7 +25,7 @@ public class HotpEntry implements Otp {
     public HotpEntry(String id) {
         counter = 0;
         secret = "";
-        this.id = id;
+        this.label = id;
         recordStoreId = -1;
     }
     
@@ -45,12 +45,12 @@ public class HotpEntry implements Otp {
         secret = s;
     }
     
-    public String getId() {
-        return id;
+    public String getLabel() {
+        return label;
     }
     
-    public void setId(String i) {
-        id = i;
+    public void setLabel(String i) {
+        label = i;
     }
     
     public int getRecordStoreId() {
@@ -66,14 +66,14 @@ public class HotpEntry implements Otp {
     }
     
     public byte[] toBytes() {
-        byte[] b_id = id.getBytes();
+        byte[] b_label = label.getBytes();
         byte[] b_secret = secret.getBytes();
-        byte[] ret = new byte[b_id.length + b_secret.length + 10];
+        byte[] ret = new byte[b_label.length + b_secret.length + 10];
         int count = 0;
         
         // Store id
-        System.arraycopy(b_id, 0, ret, count, b_id.length);
-        count += b_id.length;
+        System.arraycopy(b_label, 0, ret, count, b_label.length);
+        count += b_label.length;
         ret[count++] = Configuration.DELIM;
         
         //Store secret
@@ -97,8 +97,8 @@ public class HotpEntry implements Otp {
     }
     
     public static HotpEntry fromBytes(byte[] bytes) {
-        ByteArrayOutputStream b_id_baos = new ByteArrayOutputStream();
-        DataOutputStream b_id = new DataOutputStream(b_id_baos);
+        ByteArrayOutputStream b_label_baos = new ByteArrayOutputStream();
+        DataOutputStream b_label = new DataOutputStream(b_label_baos);
         ByteArrayOutputStream b_secret_baos = new ByteArrayOutputStream();
         DataOutputStream b_secret = new DataOutputStream(b_secret_baos);
         ByteArrayOutputStream b_counter_baos = new ByteArrayOutputStream();
@@ -109,7 +109,7 @@ public class HotpEntry implements Otp {
         try {
             for (int i = 0; i < bytes.length; i++) {
                 if (Configuration.DELIM != bytes[i]) {
-                    if (count == 0) b_id.write(bytes[i]);
+                    if (count == 0) b_label.write(bytes[i]);
                     if (count == 1) b_secret.write(bytes[i]);
                     if (count == 2) {
                         if (Configuration.HOTP != bytes[i]) {
@@ -131,10 +131,9 @@ public class HotpEntry implements Otp {
         ByteBuffer bb = ByteBuffer.wrap(counterByteArray);
         int c = bb.getInt();
         return new HotpEntry(
-                b_id_baos.toByteArray(), 
+                b_label_baos.toByteArray(), 
                 b_secret_baos.toByteArray(), 
                 c,
-                //ByteBuffer.wrap(b_counter_baos.toByteArray()).getInt(), 
                 b_recordStoreId);
     }
     

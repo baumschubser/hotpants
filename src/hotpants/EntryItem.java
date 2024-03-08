@@ -4,7 +4,6 @@ import com.google.authenticator.blackberry.Base32String;
 import com.google.authenticator.blackberry.PasscodeGenerator;
 import java.util.Calendar;
 import javax.microedition.lcdui.*;
-import javax.microedition.midlet.MIDlet;
 import org.bouncycastle.crypto.Mac;
 import org.bouncycastle.crypto.digests.SHA1Digest;
 import org.bouncycastle.crypto.macs.HMac;
@@ -22,7 +21,7 @@ public class EntryItem implements ItemCommandListener {
     
     public EntryItem(Otp e, Midlet m) {
         setupItem(e);
-
+        System.out.println("New entry item for rec id " + e.getRecordStoreId());
         entry = e;
         midlet = m;
         item.setLabel(getPinLabel());
@@ -38,23 +37,18 @@ public class EntryItem implements ItemCommandListener {
         return entry;
     }
     
-    public void setOtp(Otp o) {
-        if (entry.getOtpType() != o.getOtpType()) return;
-        entry = o;
-        setupItem(o);
-        item.setLabel(getPinLabel());
-    }
-    
     private void setupItem(Otp e) {
+        EntryCommand editCommand = new EntryCommand("Edit", Command.OK, 2, e, e.getOtpType());
         if (Configuration.TOTP == e.getOtpType()) {
             TotpEntry t = (TotpEntry)e;
             item = new Gauge("", false, t.getRefreshSeconds(), t.getRefreshSeconds());
+            item.setDefaultCommand(editCommand);
         } else if (Configuration.HOTP == e.getOtpType()) {
             HotpEntry h = (HotpEntry)e;
-            item = new StringItem(e.getId(), "");
+            item = new StringItem(e.getLabel(), "");
             item.setDefaultCommand(new EntryCommand("New PIN", Command.SCREEN, 1, e, e.getOtpType()));
+            item.addCommand(editCommand);
         }
-        item.setDefaultCommand(new EntryCommand("Edit", Command.OK, 2, e, e.getOtpType()));
         item.addCommand(new EntryCommand("Delete", Command.STOP, 3, e, e.getOtpType()));
         item.setItemCommandListener(this);
     }
@@ -82,7 +76,7 @@ public class EntryItem implements ItemCommandListener {
         if (Configuration.HOTP == entry.getOtpType()) {
             counter = ((HotpEntry)entry).getCounter();
         }
-        return entry.getId() + ": " + computePin(entry.getSecret(), counter);
+        return entry.getLabel() + ": " + computePin(entry.getSecret(), counter);
     }
 
     private String computePin(String secret, int counter) {
@@ -108,11 +102,11 @@ public class EntryItem implements ItemCommandListener {
     
     public void commandAction(Command c, Item item) {
         if (c == confirmationYes) { // confirmed item delete
-            midlet.getMainForm().deleteEntry(this);
-            Display.getDisplay(midlet).setCurrent(midlet.getMainForm());
+            midlet.deleteEntry(entry);
+            midlet.showMainForm();
             return;
         } else if (c == confirmationNo) { // no item delete
-            Display.getDisplay(midlet).setCurrent(midlet.getMainForm());
+            midlet.showMainForm();
             return;
         }
 
@@ -126,7 +120,6 @@ public class EntryItem implements ItemCommandListener {
             midlet.showEntryForm();
         } else if (c.getCommandType() == Command.STOP) { // Delete
             Display.getDisplay(midlet).setCurrent(new ConfirmationDialog(midlet, this, "Attention", "Do you want to delete this entry?").getDisplayable());
-            //midlet.getMainForm().deleteEntry(this);
         } else if (c.getCommandType() == Command.SCREEN) { // Next HOTP PIN
             if (Configuration.HOTP == getOtp().getOtpType()) {
                 ((HotpEntry)entry).nextPin();

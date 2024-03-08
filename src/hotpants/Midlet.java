@@ -22,7 +22,7 @@ public class Midlet extends MIDlet {
         entryForm = new EntryForm("", this);
         scanForm = new ScanForm(this);
         timeConfigForm = new TimeConfigForm(this);
-        mainForm.setEntriesFromConfig();
+        mainForm.updateEntriesFromConfig();
         
         display = Display.getDisplay(this);
         display.setCurrent(mainForm.getForm());
@@ -83,5 +83,20 @@ public class Midlet extends MIDlet {
         alert.setTimeout(2000);
         alert.setString(msg);
         Display.getDisplay(this).setCurrent(alert, next);
+    }
+    
+    public void addEntry(Otp entry) {
+        Configuration.getInstance().addEntry(entry);
+        mainForm.updateEntriesFromConfig();
+    }
+    
+    public void updateEntry(Otp entry) {
+        Configuration.getInstance().updateEntry(entry);
+        mainForm.updateEntriesFromConfig();
+    }
+    
+    public void deleteEntry(Otp entry) {
+        Configuration.getInstance().deleteEntry(entry.getRecordStoreId());
+        mainForm.updateEntriesFromConfig();
     }
 }

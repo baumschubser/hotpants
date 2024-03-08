@@ -53,11 +53,11 @@ public class TotpEntry implements Otp {
         secret = s;
     }
     
-    public String getId() {
+    public String getLabel() {
         return id;
     }
     
-    public void setId(String i) {
+    public void setLabel(String i) {
         id = i;
     }
     
@@ -101,12 +101,11 @@ public class TotpEntry implements Otp {
     }
     
     public static TotpEntry fromBytes(byte[] bytes) {
-        ByteArrayOutputStream b_id_baos = new ByteArrayOutputStream();
-        DataOutputStream b_id = new DataOutputStream(b_id_baos);
+        ByteArrayOutputStream b_label_baos = new ByteArrayOutputStream();
+        DataOutputStream b_label = new DataOutputStream(b_label_baos);
         ByteArrayOutputStream b_secret_baos = new ByteArrayOutputStream();
         DataOutputStream b_secret = new DataOutputStream(b_secret_baos);
         ByteArrayOutputStream b_counter_baos = new ByteArrayOutputStream();
-        DataOutputStream b_counter = new DataOutputStream(b_counter_baos);
 
         byte b_refreshSeconds = 30, b_digitCount = 6, b_recordStoreId = -1;
         byte count = 0;
@@ -114,7 +113,7 @@ public class TotpEntry implements Otp {
         try {
             for (int i = 0; i < bytes.length; i++) {
                 if (bytes[i] != Configuration.DELIM) {
-                    if (count == 0) b_id.write(bytes[i]);
+                    if (count == 0) b_label.write(bytes[i]);
                     if (count == 1) b_secret.write(bytes[i]);
                     if (count == 2) {
                         if (Configuration.TOTP != bytes[i]) {
@@ -132,7 +131,7 @@ public class TotpEntry implements Otp {
             System.err.println("Could not read Configuration from record store. Out of memory?");
         }
         return new TotpEntry(
-                b_id_baos.toByteArray(), 
+                b_label_baos.toByteArray(), 
                 b_secret_baos.toByteArray(), 
                 b_refreshSeconds, 
                 b_digitCount, 
