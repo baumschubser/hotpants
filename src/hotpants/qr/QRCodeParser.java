@@ -1,5 +1,6 @@
 package hotpants.qr;
 
+import hotpants.Configuration;
 import hotpants.HotpEntry;
 import hotpants.Midlet;
 import hotpants.Otp;
@@ -27,7 +28,7 @@ public class QRCodeParser implements Runnable {
             Display.getDisplay(midlet).setCurrent(getWarning("QR code did not contain valid OTP info"), midlet.getMainForm());
             return;
         }
-        midlet.getConfiguration().addEntry(res);
+        Configuration.getInstance().addEntry(res);
         Display.getDisplay(midlet).setCurrent(new Alert(res.getId(), "Import successful.", null, AlertType.INFO), midlet.getMainForm());
     }
     

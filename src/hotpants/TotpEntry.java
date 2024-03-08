@@ -3,7 +3,6 @@ package hotpants;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 public class TotpEntry implements Otp {
     private byte refreshSeconds, digitCount, recordStoreId;

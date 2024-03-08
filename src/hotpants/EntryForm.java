@@ -99,10 +99,11 @@ public class EntryForm extends Form implements CommandListener {
             midlet.showMainForm();
         } else if (c.getCommandType() == Command.ITEM) {
             if (sanitation()) {
+                Configuration cfg = Configuration.getInstance();
                 if (totpEntry == null && hotpEntry == null) { // new entry
-                    midlet.getMainForm().addEntry(midlet.getConfiguration().addEntry(newOtpFromInputs()));
+                    midlet.getMainForm().addEntry(cfg.addEntry(newOtpFromInputs()));
                 } else { // update
-                    midlet.getMainForm().updateEntry(midlet.getConfiguration().updateEntry(updateOtpFromInputs()));
+                    midlet.getMainForm().updateEntry(cfg.updateEntry(updateOtpFromInputs()));
                 }
             }
             reset();

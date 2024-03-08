@@ -6,7 +6,6 @@ import javax.microedition.midlet.*;
 import javax.microedition.lcdui.*;
 
 public class Midlet extends MIDlet {
-    private Configuration config;
     private Display display;
     private MainForm mainForm;
     private EntryForm entryForm;
@@ -19,12 +18,11 @@ public class Midlet extends MIDlet {
     }
 
     public void startApp() {
-        config = new Configuration();
         mainForm = new MainForm("Hotpants", this);
         entryForm = new EntryForm("", this);
         scanForm = new ScanForm(this);
         timeConfigForm = new TimeConfigForm(this);
-        mainForm.setEntries(config.getEntries());
+        mainForm.setEntriesFromConfig();
         
         display = Display.getDisplay(this);
         display.setCurrent(mainForm.getForm());
@@ -72,10 +70,6 @@ public class Midlet extends MIDlet {
     
     public EntryForm getEntryForm() {
         return entryForm;
-    }
-    
-    public Configuration getConfiguration() {
-        return config;
     }
     
     public void pauseApp() {

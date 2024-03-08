@@ -93,7 +93,7 @@ public class EntryItem implements ItemCommandListener {
             PasscodeGenerator pcg = new PasscodeGenerator(mac);
 
             String pin;
-            long currentTimeMillis = System.currentTimeMillis() + (midlet.getConfiguration().getOffsetSeconds() * 1000);
+            long currentTimeMillis = System.currentTimeMillis() + (Configuration.getInstance().getOffsetSeconds() * 1000);
             if (counter == -1) { // time-based totp
                 pin =  pcg.generateTimeoutCode(currentTimeMillis);
             } else { // counter-based hotp
@@ -131,7 +131,7 @@ public class EntryItem implements ItemCommandListener {
             if (Configuration.HOTP == getOtp().getOtpType()) {
                 ((HotpEntry)entry).nextPin();
                 item.setLabel(getPinLabel());
-                midlet.getConfiguration().updateEntry(entry);
+                Configuration.getInstance().updateEntry(entry);
             }
         }
     }

@@ -78,7 +78,7 @@ public class ScanForm extends Form implements CommandListener {
     }
     
     public void setOtp(Otp otp) {
-        midlet.getConfiguration().addEntry(otp);
+        Configuration.getInstance().addEntry(otp);
         midlet.getMainForm().addEntry(otp);
         Display.getDisplay(midlet).setCurrent(new Alert("OTP created: " + otp.getId()), midlet.getMainForm());
     }

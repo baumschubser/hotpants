@@ -1,13 +1,11 @@
 package hotpants;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import javax.microedition.rms.*;
 import java.util.Hashtable;
 
 public class Configuration {
+    private static Configuration instance = null;
+
     private RecordStore recordStore;
     private Hashtable entries;
     public static final byte DELIM = 127;
@@ -17,7 +15,7 @@ public class Configuration {
     private byte timeOffset = 0;
     private int offsetRecordId = -1;
     
-    public Configuration() {
+    private Configuration() {
         entries = new Hashtable();
         try {
             recordStore = RecordStore.openRecordStore("Hotpants",true);
@@ -40,6 +38,11 @@ public class Configuration {
         } catch (RecordStoreException e) {
             System.err.println("Could not load configuration: " + e.getMessage());
         }
+    }
+    
+    public static Configuration getInstance() {
+        if (instance == null) instance = new Configuration();
+        return instance;
     }
     
     private void setTimeOffset(byte[] record) {

@@ -34,7 +34,7 @@ public class TimeConfigForm  extends Form implements CommandListener, ItemStateL
         this.setItemStateListener(this);
         
         displayedTime = Calendar.getInstance();
-        offset = m.getConfiguration().getOffsetSeconds();
+        offset = Configuration.getInstance().getOffsetSeconds();
         updateTimeLabel();
 
         cancel = new Command("Cancel", Command.CANCEL, 1);
@@ -64,7 +64,7 @@ public class TimeConfigForm  extends Form implements CommandListener, ItemStateL
 
     public void commandAction(Command c, Displayable d) {
         if (c == save) {
-            midlet.getConfiguration().updateOffsetSeconds(offset);
+            Configuration.getInstance().updateOffsetSeconds(offset);
         }
         midlet.showMainForm();
     }

@@ -38,8 +38,9 @@ public class MainForm extends Form implements CommandListener {
         this.setCommandListener(this);
     }
     
-    public void setEntries(Hashtable entries) {
+    public void setEntriesFromConfig() {
         deleteAll();
+        Hashtable entries = Configuration.getInstance().getEntries();
         Enumeration keys = entries.keys();
         while (keys.hasMoreElements()) {
             entryItems.addElement(new EntryItem((Otp)entries.get(keys.nextElement()), midlet));
@@ -58,7 +59,7 @@ public class MainForm extends Form implements CommandListener {
                 int recId = item.getOtp().getRecordStoreId();
                 delete(i);
                 entryItems.removeElement(item);
-                midlet.getConfiguration().deleteEntry(recId);
+                Configuration.getInstance().deleteEntry(recId);
                 break;
             }
         }
