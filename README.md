@@ -13,14 +13,16 @@ A J2ME Java application to manage your two-factor authentication with your dumbp
 Head over to [releases](/releases) and download the .jad or .jar file. Copy it to your phone (Bluetooth, USB…) and you should be ready to go.
 
 ## Usage
-Just add HOTP and TOTP providers. Since Hotpants can not scan QR codes (yet?), you have to type in the secret manually. Once this is done, you can simply read the temporary TOTP timepad password or the current HOTP password!
-To generate the next HOTP password, just select the entry an click "New Pin".
+Just add HOTP and TOTP providers, either manually or **scan a QR code**. Then, you can simply read the temporary TOTP timepad password or the current HOTP password!
+When using HOTP, just select the entry an click "New Pin".
+
+Because some phones only allow for manual time setting by the minute, and TOTPs require exact timing by the second, you can set an offset on the seconds of the phone's time in the menu item "Time Configuration".
 
 ## Todo
 
 * Validate secret
 * Make hashing algorithm selectable (SHA1 at the moment)
-* Maybe add QR scan?
 
 ## Credit
-[Evsinev](https://github.com/evsinev) built something that I could build on.
+OTP PIN calculation from [Evsinev](https://github.com/evsinev/j2me-hotp).
+QR Code Scanner from [OnlineCity](https://github.com/onlinecity/oc-qrreader).
