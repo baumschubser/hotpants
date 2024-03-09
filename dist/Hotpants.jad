@@ -1,5 +1,5 @@
 MIDlet-1: Hotpants,/icon32.png,hotpants.Midlet
-MIDlet-Jar-Size: 78017
+MIDlet-Jar-Size: 77942
 MIDlet-Jar-URL: Hotpants.jar
 MIDlet-Name: Hotpants
 MIDlet-Permissions: javax.microedition.media.control.VideoControl.getSnapshot

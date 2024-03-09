@@ -28,8 +28,8 @@ public class QRCodeParser implements Runnable {
             Display.getDisplay(midlet).setCurrent(getWarning("QR code did not contain valid OTP info"), midlet.getMainForm());
             return;
         }
-        Configuration.getInstance().addEntry(res);
-        Display.getDisplay(midlet).setCurrent(new Alert(res.getLabel(), "Import successful.", null, AlertType.INFO), midlet.getMainForm());
+        midlet.addEntry(res);
+        Display.getDisplay(midlet).setCurrent(new Alert(res.getLabel(), "Import successful", null, AlertType.INFO), midlet.getMainForm());
     }
     
     public Otp getOtp() {
