@@ -44,8 +44,6 @@ public class TimeConfigForm  extends Form implements CommandListener, ItemStateL
         addCommand(save);
 
         this.setCommandListener(this);
-        
-        Display.getDisplay(m).setCurrentItem(secondsInput);
     }
     
     public void updateTimeLabel() {
