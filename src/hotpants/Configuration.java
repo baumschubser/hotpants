@@ -22,13 +22,16 @@ public class Configuration {
             recordStore.setMode(RecordStore.AUTHMODE_PRIVATE, false);
             RecordEnumeration re = recordStore.enumerateRecords(null, null, false);
             while (re.hasNextElement()) {
-                byte[] record = re.nextRecord();
+                int recordId = re.nextRecordId();
+                byte[] record = recordStore.getRecord(recordId);
                 int type = getEntryTypeFromRecordBytes(record);
                 if (Configuration.TOTP == type) {
                     TotpEntry e = TotpEntry.fromBytes(record);
+                    e.setRecordStoreId((byte)recordId);
                     entries.put(new Integer(e.getRecordStoreId()), e);
                 } else if (Configuration.HOTP == type) {
                     HotpEntry e = HotpEntry.fromBytes(record);
+                    e.setRecordStoreId((byte)recordId);
                     entries.put(new Integer(e.getRecordStoreId()), e);
                 } else if (Configuration.TimeConfig == type) {
                     setTimeOffset(record);
